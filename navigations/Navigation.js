@@ -11,11 +11,11 @@ export default function Navigation() {
     const screenOptions = (route, color) => {
         switch (route.name) {
             case "entrega":
-                iconName = "human-dolly"
-                break;
+                iconName = "dolly"
+                break
             case "cuenta":
                 iconName = "account-details"
-                break;
+                break
         }
         return (
             <Icon
