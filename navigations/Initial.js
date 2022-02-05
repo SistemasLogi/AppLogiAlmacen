@@ -15,7 +15,7 @@ export default function Initial() {
   useEffect(() => {
     const checkResponse = async () => {
       let response = await getValueToken('toklogialmac')
-      console.log(response)
+      //console.log(response)
       if (response == true) {
         await dataResponse()
       } else {
@@ -49,7 +49,7 @@ export default function Initial() {
         await accionAsincrona()
         console.log(data)
         if (data.error_6) {
-          console.log(data)
+          //console.log(data)
           await deleteValueToken('toklogialmac')
           setTokenKey(false)
         }
