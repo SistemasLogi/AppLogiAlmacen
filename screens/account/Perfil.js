@@ -39,7 +39,7 @@ export default function Perfil({ tokenAuth }) {
             .then(r => r.json())
             .then(async data => {
                 await accionAsincrona()
-                console.log(data) 
+                //console.log(data) 
                 if (data.error_6) {
                     //console.log(data)
                     await deleteValueToken('toklogialmac')

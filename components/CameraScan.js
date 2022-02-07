@@ -7,15 +7,19 @@ import { useNavigation } from '@react-navigation/native'
 import BarcodeMask from 'react-native-barcode-mask'
 
 import * as RootNavigation from '../navigations/RootNavigation'
+import { GET_AENV_ID, GET_URL, INSERT_EST_AENV } from '../utils/Querys'
+import { deleteValueToken, getTextToken } from '../utils/Actions'
 
 export default function CameraScan() {
     const [hasPermission, setHasPermission] = useState(null)
     const [type, setType] = useState(Camera.Constants.Type.back)
     const [previewVisible, setPreviewVisible] = useState(false)
     const [scanned, setScanned] = useState(false)
+    const [tokenKey, setTokenKey] = useState(null)
     const [dateNow, setDateNow] = useState("")
     const [dateScan, setDateScan] = useState("")
     const [listEnvios, setListEnvios] = useState(listaEnviosScan)
+    const [total, setTotal] = useState(0)
 
     const navigation = useNavigation()
 
@@ -24,6 +28,8 @@ export default function CameraScan() {
             const { status } = await BarCodeScanner.requestPermissionsAsync()
             if (status === 'granted') {
                 setHasPermission(true)
+                let response = await getTextToken('toklogialmac')
+                setTokenKey(response)
             } else {
                 Alert.alert('Acceso denegado')
             }
@@ -53,23 +59,38 @@ export default function CameraScan() {
         setPreviewVisible(true)
         setScanned(true)
         Vibration.vibrate()
-        console.log('Type: ' + type + ' data: ' + data)
+        //console.log('Type: ' + type + ' data: ' + data)
 
-        /*  try {
-             let JsonData = JSON.parse(data)
-             getState(JsonData.id)
-             await accionAsincrona()
-         } catch (error) {
-             await accionAsincrona()
-             Alert.alert(
-                 "Cuidado!",
-                 "Código no válido!!",
-                 [
-                     { text: "OK", onPress: () => cameraVisible() }
-                 ]
-             )
-         } */
-
+        if (type == 256) {
+            try {
+                let JsonData = JSON.parse(data)
+                getState(JsonData.id)
+                await accionAsincrona()
+            } catch (error) {
+                await accionAsincrona()
+                Alert.alert(
+                    "Cuidado!",
+                    "Código no válido!!",
+                    [
+                        { text: "OK", onPress: () => cameraVisible() }
+                    ]
+                )
+            }
+        } else {
+            try {
+                getState(data)
+                await accionAsincrona()
+            } catch (error) {
+                await accionAsincrona()
+                Alert.alert(
+                    "Cuidado!",
+                    "Código no válido!!",
+                    [
+                        { text: "OK", onPress: () => cameraVisible() }
+                    ]
+                )
+            }
+        }
         //console.log(JsonData.os_id)
         //console.log(listServices)
         Vibration.cancel()
@@ -96,7 +117,7 @@ export default function CameraScan() {
         const exist = listEnvios.indexOf(env_id)
         if (exist === -1) {
             dataServ = true
-            dataResponseEnvRep(env_id)
+            dataResponseGuiaOp(env_id)
         } else {
             Alert.alert(
                 "OK!",
@@ -130,63 +151,117 @@ export default function CameraScan() {
         setScanned(false)
     }
 
-    //const url = GET_URL
-    /* 
-        const dataResponseEnvRep = async (info) => {
-            await stopBackgroundUpdate()
-            const query = INSERT_ESTADO_ENV_REP(info, 5, dateNow, "")
-    
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `${tokenMens}`
-                },
-                body: JSON.stringify({
-                    query,
-                    variables: null
-                })
+    const url = GET_URL
+
+    const dataResponseGuiaOp = async (num_guia) => {
+        const query = GET_AENV_ID(num_guia)
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `${tokenKey}`
+            },
+            body: JSON.stringify({
+                query,
+                variables: null
             })
-                .then(r => r.json())
-                .then(async data => {
-                    await accionAsincronaTime()
+        })
+            .then(r => r.json())
+            .then(async data => {
+                await accionAsincronaTime()
+                //console.log(data)
+                if (data.error_6) {
                     //console.log(data)
-                    if (data.error_6) {
-                        //console.log(data)
-                        await deleteValueToken('logitok')
-                        RootNavigation.navigate("Login")
-                        return
-                    }
-                    if (data.data.add_est_rep_env_men) {
-                        let envioNum = await data.data.add_est_rep_env_men.exe_en_id
-                        if (envioNum == info) {
-                            //console.log(envioNum)
-                            setListEnvios(listEnvios.concat(info))
-                            cameraVisible()
-                        } else {
-                            //console.log(data)
-                            Alert.alert(
-                                "Error!",
-                                "Error en la conexion",
-                                [
-                                    { text: "OK", onPress: () => cameraVisible() }
-                                ]
-                            )
-                        }
-    
+                    await deleteValueToken('toklogialmac')
+                    RootNavigation.navigate("Login")
+                    return
+                }
+                if (data.data.a_envio_x_guia_op) {
+                    //console.log(data.data.a_envio_x_guia_op.length)
+
+                    if (data.data.a_envio_x_guia_op.length != 0) {
+                        let envioNum = await data.data.a_envio_x_guia_op[0].aen_id
+                        let operador = await data.data.a_envio_x_guia_op[0].op_datos[0].ope_nombre
+                        //console.log(envioNum)
+                        //console.log(operador)
+                        await dataResponseEst(envioNum, operador, num_guia)
                     } else {
                         Alert.alert(
                             "Cuidado!",
-                            "Numero no disponible para reparto",
+                            "Numero no registrado en la Base de Datos",
                             [
                                 { text: "OK", onPress: () => cameraVisible() }
                             ]
                         )
                     }
-                    await startBackgroundUpdate()
-                }).catch(error => console.error(error))
-        } */
+
+                } else {
+                    Alert.alert(
+                        "Error!",
+                        "Error al leer el numero",
+                        [
+                            { text: "OK", onPress: () => cameraVisible() }
+                        ]
+                    )
+                }
+            }).catch(error => console.error(error))
+    }
+
+    const dataResponseEst = async (id_env, operador, num_guia) => {
+        const query = INSERT_EST_AENV(id_env, 3, dateNow, operador)
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `${tokenKey}`
+            },
+            body: JSON.stringify({
+                query,
+                variables: null
+            })
+        })
+            .then(r => r.json())
+            .then(async data => {
+                await accionAsincronaTime()
+                //console.log(data)
+                if (data.error_6) {
+                    //console.log(data)
+                    await deleteValueToken('toklogialmac')
+                    RootNavigation.navigate("Login")
+                    return
+                }
+                if (data.data.add_est_aenv_alm) {
+
+                    if (data.data.add_est_aenv_alm.length != 0) {
+                        setListEnvios(listEnvios.concat(num_guia))
+                        let increment = total + 1
+                        setTotal(increment)
+                        cameraVisible()
+                    } else {
+                        Alert.alert(
+                            "ERROR!",
+                            "Envio no procesado",
+                            [
+                                { text: "OK", onPress: () => cameraVisible() }
+                            ]
+                        )
+                    }
+
+                } else {
+                    Alert.alert(
+                        "ERROR!",
+                        "Envio no procesado",
+                        [
+                            { text: "OK", onPress: () => cameraVisible() }
+                        ]
+                    )
+                }
+            }).catch(error => console.error(error))
+    }
 
     return (
         <View style={styles.container}>
@@ -238,6 +313,9 @@ export default function CameraScan() {
                 )}
             </View>
             <ScrollView>
+                <Card>
+                    <Card.Title>TOTAL ENV {total}</Card.Title>
+                </Card>
                 {previewVisible ? (
                     <ActivityIndicator
                         size="large"
@@ -308,8 +386,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent'
     },
     headerEnv: {
-        backgroundColor: "#E9DDE9",
-        borderRadius: 10
+        backgroundColor: "#fbecd4",
+        borderRadius: 15
     },
     image: {
         height: 50,

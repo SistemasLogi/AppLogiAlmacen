@@ -31,7 +31,7 @@ export default function Initial() {
 
   const dataResponse = async () => {
     let tokenMens = await getTextToken('toklogialmac')
-    console.log(tokenMens)
+    //console.log(tokenMens)
     fetch(url, {
       method: 'POST',
       headers: {
@@ -47,14 +47,14 @@ export default function Initial() {
       .then(r => r.json())
       .then(async data => {
         await accionAsincrona()
-        console.log(data)
+        //console.log(data)
         if (data.error_6) {
           //console.log(data)
           await deleteValueToken('toklogialmac')
           setTokenKey(false)
         }
         if (data.data) {
-          console.log(data.data.datos_emp_user[0])
+          //console.log(data.data.datos_emp_user[0])
           setTokenKey(true)
         }
       }).catch(error => {
