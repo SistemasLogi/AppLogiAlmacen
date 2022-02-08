@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createRef } from 'react'
 import { Alert, StyleSheet, View, TouchableOpacity, Vibration, Image, ScrollView, ActivityIndicator } from 'react-native'
-import { Button, Card, Text } from 'react-native-elements'
+import { Button, Card, Icon, Text } from 'react-native-elements'
 import { Camera } from 'expo-camera'
 import { BarCodeScanner } from 'expo-barcode-scanner'
 import { useNavigation } from '@react-navigation/native'
@@ -14,10 +14,12 @@ export default function CameraScan() {
     const [hasPermission, setHasPermission] = useState(null)
     const [type, setType] = useState(Camera.Constants.Type.back)
     const [previewVisible, setPreviewVisible] = useState(false)
+    const [previewVisibleList, setPreviewVisibleList] = useState(false)
     const [scanned, setScanned] = useState(false)
     const [tokenKey, setTokenKey] = useState(null)
     const [dateNow, setDateNow] = useState("")
-    const [dateScan, setDateScan] = useState("")
+    const [iconBoton, setIconBoton] = useState("barcode-off")
+    const [textBoton, setTextBoton] = useState("BLOQUEAR SCAN..")
     const [listEnvios, setListEnvios] = useState(listaEnviosScan)
     const [total, setTotal] = useState(0)
 
@@ -57,6 +59,7 @@ export default function CameraScan() {
 
         fechaHoraActual()
         setPreviewVisible(true)
+        setPreviewVisibleList(true)
         setScanned(true)
         Vibration.vibrate()
         //console.log('Type: ' + type + ' data: ' + data)
@@ -105,9 +108,16 @@ export default function CameraScan() {
         return <Text>No access to camera</Text>
     }
 
-    const onLayoutMeasuredHandler = (e) => {
-        let dimension = JSON.stringify(e)
-        console.log(dimension)
+    const inactiveScann = () => {
+        if (previewVisible == false) {
+            setPreviewVisible(true)
+            setIconBoton("barcode-scan")
+            setTextBoton("DESBLOQUEAR SCAN..")
+        } else {
+            setPreviewVisible(false)
+            setIconBoton("barcode-off")
+            setTextBoton("BLOQUEAR SCAN..")
+        }
     }
 
     const getState = (env_id) => {
@@ -148,6 +158,7 @@ export default function CameraScan() {
 
     const cameraVisible = () => {
         setPreviewVisible(false)
+        setPreviewVisibleList(false)
         setScanned(false)
     }
 
@@ -298,25 +309,40 @@ export default function CameraScan() {
                         </View>
                         <BarcodeMask
                             edgeColor={'#5d005c'}
-                            width={380} height={400}
+                            width={330} height={320}
                             edgeBorderWidth={5}
                         //onLayoutMeasured={onLayoutMeasuredHandler}
                         />
-                        <Card containerStyle={styles.headerBoton}>
-                            <Button
-                                title="FINALIZAR"
-                                buttonStyle={styles.buttonFin}
-                                onPress={() => navigation.navigate("Entregas")}
-                            />
-                        </Card>
                     </Camera>
                 )}
             </View>
             <ScrollView>
+                <Card containerStyle={styles.headerBoton}>
+                    <Button
+                        title="FINALIZAR"
+                        buttonStyle={styles.buttonFin}
+                        onPress={() => navigation.navigate("Entregas")}
+                    />
+                    <Button
+                        icon={
+                            <Icon
+                                type="material-community"
+                                name={iconBoton}
+                                iconStyle={styles.textlogi}
+                                size={25}
+                            />
+                        }
+                        iconRight
+                        title={textBoton}
+                        titleStyle={styles.textlogi}
+                        type="Outline button"
+                        onPress={() => inactiveScann()}
+                    />
+                </Card>
                 <Card>
                     <Card.Title>TOTAL ENV {total}</Card.Title>
                 </Card>
-                {previewVisible ? (
+                {previewVisibleList ? (
                     <ActivityIndicator
                         size="large"
                         color="#5d005c"
@@ -350,7 +376,7 @@ const styles = StyleSheet.create({
         flex: 1
     },
     containerDos: {
-        height: "75%",
+        height: "56%",
         width: "100%",
         marginBottom: 10
     },
@@ -382,8 +408,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
     },
     headerBoton: {
-        borderRadius: 10,
-        backgroundColor: 'transparent'
+        borderRadius: 10
     },
     headerEnv: {
         backgroundColor: "#fbecd4",
@@ -400,5 +425,8 @@ const styles = StyleSheet.create({
         marginBottom: 2,
         alignSelf: 'center',
         alignItems: 'center'
+    },
+    textlogi: {
+        color: "#5d005c"
     }
 })

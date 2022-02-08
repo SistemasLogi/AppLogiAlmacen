@@ -2,7 +2,7 @@
   "expo": {
     "name": "AppLogiAlmacen",
     "slug": "AppLogiAlmacen",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -17,13 +17,17 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.grupologisas.applogialmacen",
+      "buildNumber": "1.0.1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
+      "package": "com.grupologisas.applogialmacen",
+      "versionCode": 1,
       "permissions": [
         "CAMERA",
         "CAMERA_ROLL",
